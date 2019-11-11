@@ -2,13 +2,17 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 # a={'x': [12, 20, 28, 18, 10, 29, 33, 24, 45, 45, 52, 51, 52, 55, 53, 55, 61, 64, 69, 72, 23]}
-# print(max(a['x']))
-
+# print(np.random.choice(a['x']))
+# print(np.random.random(1))
+# exit()
 class kmeans():
-    def __init__(self,dataframe,k,centerid={},colormap={}):
+    def __init__(self,dataframe,k,centerid={}):
         self.dataframe=dataframe
         self.k=k
-        self.centerid={i:[np.random.randint(min(self.dataframe['x']),max(self.dataframe['x'])),np.random.randint(min(self.dataframe['y']),max(self.dataframe['y']))] for i in range(self.k)}
+        if centerid=={}:
+            self.centerid={i:[np.random.randint(min(self.dataframe['x']),max(self.dataframe['x'])),np.random.randint(min(self.dataframe['y']),max(self.dataframe['y']))] for i in range(self.k)}
+        else:
+            self.centerid=centerid
         self.colormap={0:'r',1:'g',2:'b'}
 
     def paint_color(self):
@@ -58,5 +62,31 @@ df = pd.DataFrame({
         'y': [39, 36, 30, 52, 54, 20, 46, 55, 59, 63, 70, 66, 63, 58, 23, 14, 8, 19, 7, 24, 77]
     })
 
-test=kmeans(df,3)
-test.kmeans_fun()
+class kmeans_plus(kmeans):
+    def __init__(self,dataframe,k,centerid=None,colormap={0:'r',1:'g',2:'b'}):
+        self.dataframe=dataframe
+        self.k=k
+        r=np.random.randint(0,len(self.dataframe['x']))
+        self.centerid={0:[self.dataframe['x'][r],self.dataframe['y'][r]]}
+        self.dataframe['D']=(self.dataframe['x']-self.centerid[0][0])**2+(self.dataframe['y']-self.centerid[0][1])**2
+        self.dataframe['probs']=self.dataframe['D']/self.dataframe['D'].sum()
+        self.dataframe['cumprobs']=self.dataframe['probs'].cumsum()
+        for j in range(1,self.k):
+            rp = np.random.random(1)
+            self.dataframe['D'] = (self.dataframe['x'] - self.centerid[j-1][0]) ** 2 + (
+                    self.dataframe['y'] - self.centerid[j-1][1]) ** 2
+            self.dataframe['probs'] = self.dataframe['D'] / self.dataframe['D'].sum()
+            self.dataframe['cumprobs'] = self.dataframe['probs'].cumsum()
+            for i,d in enumerate(self.dataframe['cumprobs']):
+                if rp<d:
+                    self.centerid[j]=[self.dataframe['x'][i],self.dataframe['y'][i]]
+                    break
+        self.colormap=colormap
+        super(kmeans_plus, self).__init__(self.dataframe,self.k,self.centerid)
+
+    def f(self):
+        print(self.centerid)
+        return self.centerid
+
+test=kmeans_plus(df,3)
+test.f()
